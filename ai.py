@@ -1,5 +1,6 @@
 import copy
 import datetime
+import random
 
 
 class State:
@@ -8,10 +9,11 @@ class State:
         self.myColor = myColor      # 1: black, 2: white
         self.otherColor = 3 - myColor
         self.turn = turn            # 'me', 'other'
-        self.step = step    # [i, j]
+        self.step = step            # [i, j]
         self.round = round
         self.pieceNum = self.count_pieces()
         self.score = self.judge_board()
+        self.minMax = self.score
         self.children = []
 
     def judge_board(self):
@@ -92,42 +94,39 @@ def initial_board():
         for j in range(8):
             line.append(0)
         board.append(line)
-    board[3][3] = board[4][4] = 1
-    board[3][4] = board[4][3] = 2
+    board[3][4] = board[4][3] = 1
+    board[3][3] = board[4][4] = 2
     return board
 
 
-def search_n_steps(state, n_searched, n):
-    if n_searched < n:
+def deep_search(state, depth_arrived, depth):
+    if depth_arrived < depth:
         if state.children == []:
             state.search_next_step()
-            # print(state.round, state.score, state.board)
         for child in state.children:
-            search_n_steps(child, n_searched+1, n)
+            deep_search(child, depth_arrived+1, depth)
+            # print(child.round, child.score, child.minMax, child.board)
+        if state.turn == 'me':
+            state.minMax = max([child.minMax for child in state.children])
+        else:
+            state.minMax = min([child.minMax for child in state.children])
+        # print(state.round, state.score, state.minMax, state.board)
+    if depth_arrived == 0:
+        step = random.choice([child.step for child in state.children if child.minMax == state.minMax])
+        return step, state.minMax
 
 
-board = initial_board()
+# board = initial_board()
+board = [[ 2, 2, 2, 2, 2, 2, 2, 2],
+         [ 2, 2, 2, 2, 2, 2, 2, 2],
+         [ 2, 2, 2, 1, 1, 2, 2, 2],
+         [ 2, 2, 2, 2, 2, 1, 2, 2],
+         [ 2, 2, 2, 2, 2, 2, 1, 2],
+         [ 2, 2, 1, 1, 1, 1, 2, 2],
+         [ 2, 2, 2, 2, 2, 2, 2, 2],
+         [ 2, 2, 2, 2, 2, 2, 2, 1]]
 state = State(board, 1, 'me')
-# print(state.board)
-# print(state.score)
-# print(state.search_next_step())
-# for child in state.children:
-#     # print(child.board)
-#     # print(child.score)
-#     print(child.step, child.search_next_step())
+print(deep_search(state, 0, 5))
 
-time1 = datetime.datetime.now()
-search_n_steps(state, 0, 4)
-time2 = datetime.datetime.now()
-print(time2 - time1)
-state = state.children[0]
-state = state.children[0]
-search_n_steps(state, 0, 4)
-time3 = datetime.datetime.now()
-print(time3 - time2)
-state = state.children[0]
-state = state.children[0]
-search_n_steps(state, 0, 4)
-time4 = datetime.datetime.now()
-print(time4 - time3)
+
 
